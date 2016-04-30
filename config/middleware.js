@@ -4,6 +4,12 @@ var morgan      = require('morgan'), // used for logging incoming request
 
 
 module.exports = function (app, express) {
+
+  // Simple activity checker
+  app.get('/active', function (req, res) {
+    res.send("Hi. This is an MUN server. ")
+  })
+
   // Express 4 allows us to use multiple routers with their own configurations
   var userRouter = express.Router();
   var linkRouter = express.Router();
