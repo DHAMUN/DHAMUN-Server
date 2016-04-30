@@ -18,7 +18,7 @@ c) A mobile app (coming soon)
 ```
 
 This is going to be a server that handles various requests from the client and the mobile app.
-Look at the about repo for all the awesome upcoming features.
+Look at the about repo for all the awesome upcoming features, and for other important things (like contribution guidelines).
 
 ## Installation
 ```
@@ -30,10 +30,6 @@ $ npm install
 $ npm start
 ```
 Starts the server at [http://localhost:8000](http://localhost:8000).
-
-## Contribution
-
-Before push commit make sure that all modules are added in package.json
 
 ### Try
 ```
