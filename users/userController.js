@@ -5,24 +5,15 @@ var User = require('./userModel.js'),
 
 module.exports = {
   signin: function (req, res, next) {
-    var username = req.body.username,
-        password = req.body.password;
+    var hash = req.body.hashcode;
 
     var findUser = Q.nbind(User.findOne, User);
-    findUser({username: username})
+    findUser({hashCode: hash})
       .then(function (user) {
         if (!user) {
           next(new Error('User does not exist'));
         } else {
-          return user.comparePasswords(password)
-            .then(function(foundUser) {
-              if (foundUser) {
-                var token = jwt.encode(user, process.env.TOKEN_SECRET);
-                res.json({token: token});
-              } else {
-                return next(new Error('No user'));
-              }
-            });
+          return user.compareCodes(hash);
         }
       })
       .fail(function (error) {
