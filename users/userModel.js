@@ -28,7 +28,7 @@ var UserSchema = new mongoose.Schema({
     required: true
   },
 
-  conference: {
+  committee: {
     type: String,
     required: true
   }
