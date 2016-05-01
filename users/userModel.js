@@ -6,18 +6,36 @@ var mongoose = require('mongoose'),
 
 var UserSchema = new mongoose.Schema({
 
-  username: {
+  hashCode: {
     type: String,
     required: true,
     unique: true
   },
 
-  password: {
+  firstName: {
+    type: String,
+    required: true
+  },
+
+  lastName: {
+    type: String,
+    required: true    
+  },
+
+  school: {
     type: String,
     required: true
   },
   
-  salt: String
+  userLevel: {
+    type: String,
+    required: true
+  },
+
+  conference: {
+    type: String,
+    required: true
+  }
 
 });
 
