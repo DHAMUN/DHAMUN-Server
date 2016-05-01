@@ -4,7 +4,7 @@ var User = require('./userModel.js'),
 
 module.exports = {
   signin: function (req, res, next) {
-    var hash = req.body.hashcode;
+    var hash = req.body.hashCode;
 
     var findUser = Q.nbind(User.findOne, User);
     findUser({hashCode: hash})
