@@ -4,7 +4,36 @@ var User = require('./userModel.js'),
 
 module.exports = {
   signin: function (req, res, next) {
-    var hash = req.body.hashCode;
+    var username = req.body.username,
+        password = req.body.password;
+
+    var findUser = Q.nbind(User.findOne, User);
+    findUser({username: username})
+      .then(function (user) {
+        if (!user) {
+          next(new Error('User does not exist'));
+        } else {
+          return user.comparePasswords(password)
+            .then(function(foundUser) {
+              if (foundUser) {
+                var token = jwt.encode(user, process.env.TOKEN_SECRET);
+                res.json({token: token});
+              } else {
+                return next(new Error('No user'));
+              }
+            });
+        }
+      })
+      .fail(function (error) {
+        next(error);
+      });
+  },
+
+  signup: function (req, res, next) {
+    var username  = req.body.username,
+        password  = req.body.password,
+        hash      = req.body.hashCode,
+        save;
 
     var findUser = Q.nbind(User.findOne, User);
     findUser({hashCode: hash})
@@ -12,9 +41,21 @@ module.exports = {
         if (!user) {
           next(new Error('User does not exist'));
         } else {
-          if (user.compareCodes(hash)){
-            var token = jwt.encode(user, process.env.TOKEN_SECRET);
-            res.json({token: token});
+          if (user.compareCodes(hash) && !user.hashVerified){
+
+            user.username = username;
+            user.password = password;
+            user.hashVerified = true;
+
+            user.save(function(err){
+              if (err) {
+                next(err);
+              } else {
+                var token = jwt.encode(user, process.env.TOKEN_SECRET);
+                res.json({token: token});             
+              }
+            })
+
           } else {
             return next(new Error('No user'));
           }
@@ -23,6 +64,7 @@ module.exports = {
       .fail(function (error) {
         next(error);
       });
+
   },
 
   checkAuth: function (req, res, next) {
