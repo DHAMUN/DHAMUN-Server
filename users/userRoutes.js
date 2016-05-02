@@ -1,5 +1,5 @@
 var userController = require('./userController.js'),
-             helpers = require('../config/helpers.js');
+           helpers = require('../config/helpers.js');
 
 
 
