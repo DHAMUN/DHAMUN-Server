@@ -19,7 +19,7 @@ module.exports = {
                 var token = jwt.encode(user, process.env.TOKEN_SECRET);
                 res.json({token: token});
               } else {
-                return next(new Error('No user'));
+                return next(new Error('Invalid Username'));
               }
             });
         }
@@ -39,7 +39,7 @@ module.exports = {
     findUser({hashCode: hash})
       .then(function (user) {
         if (!user) {
-          next(new Error('User does not exist'));
+          next(new Error('Not a DHAMUN Code!'));
         } else {
           if (user.compareCodes(hash) && !user.hashVerified){
 
@@ -57,11 +57,12 @@ module.exports = {
             })
 
           } else {
-            return next(new Error('No user'));
+            return next(new Error('This code has been registered. Talk to an admin if its yours.'));
           }
         }
       })
       .fail(function (error) {
+        console.log("TRIGGERED BRO");
         next(error);
       });
 
