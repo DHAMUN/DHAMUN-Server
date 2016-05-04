@@ -15,10 +15,9 @@ var UserSchema = new mongoose.Schema({
     default: false
   },
 
-  username: {
+  email: {
     type: String,
-    unique: true,
-    sparse: true
+    unique: true
   },
 
   password: {
@@ -36,6 +35,11 @@ var UserSchema = new mongoose.Schema({
   },
 
   school: {
+    type: String,
+    required: true
+  },
+
+  country: {
     type: String,
     required: true
   },

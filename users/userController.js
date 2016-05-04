@@ -4,14 +4,18 @@ var User = require('./userModel.js'),
 
 module.exports = {
   signin: function (req, res, next) {
-    var username = req.body.username,
+    var email    = req.body.email,
         password = req.body.password;
 
+    console.log(req.body);
+
     var findUser = Q.nbind(User.findOne, User);
-    findUser({username: username})
+    findUser({email: email})
       .then(function (user) {
         if (!user) {
-          next(new Error('User does not exist'));
+          next(new Error('Invalid email'));
+        } else if (!user.hashVerified){
+          next(new Error('You have not registered your account. Check your email for a link.'));
         } else {
           return user.comparePasswords(password)
             .then(function(foundUser) {
@@ -19,7 +23,7 @@ module.exports = {
                 var token = jwt.encode(user, process.env.TOKEN_SECRET);
                 res.json({token: token});
               } else {
-                return next(new Error('Invalid Username'));
+                return next(new Error('Incorrect Password'));
               }
             });
         }
@@ -30,20 +34,20 @@ module.exports = {
   },
 
   signup: function (req, res, next) {
-    var username  = req.body.username,
-        password  = req.body.password,
-        hash      = req.body.hashCode,
+    var password  = req.body.password,
+        hash      = req.body.hash,
         save;
+
+    console.log(req.body);
 
     var findUser = Q.nbind(User.findOne, User);
     findUser({hashCode: hash})
       .then(function (user) {
         if (!user) {
-          next(new Error('Not a DHAMUN Code!'));
+          next(new Error('Not a valid link!'));
         } else {
           if (user.compareCodes(hash) && !user.hashVerified){
 
-            user.username = username;
             user.password = password;
             user.hashVerified = true;
 
@@ -57,12 +61,11 @@ module.exports = {
             })
 
           } else {
-            return next(new Error('This code has been registered. Talk to an admin if its yours.'));
+            return next(new Error('This account has been registered. Talk to an admin if its yours.'));
           }
         }
       })
       .fail(function (error) {
-        console.log("TRIGGERED BRO");
         next(error);
       });
 
