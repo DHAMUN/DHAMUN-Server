@@ -9,6 +9,7 @@ var express     = require('express'),
 var app = express(),
     cors = require('cors');
 var server = require('http').Server(app);
+var io = require('socket.io')(server);
 
 app.use(cors());
 mongoose.connect(process.env.MONGODB_URI); // connect to mongo database
@@ -17,6 +18,7 @@ mongoose.connect(process.env.MONGODB_URI); // connect to mongo database
 // configure our server with all the middleware and and routing
 
 require('./config/middleware.js')(app, express);
+require('./config/socketHandler.js')(io);
 
 // export our app for testing and flexibility, required by index.js
 

@@ -7,8 +7,6 @@ module.exports = {
     var email    = req.body.email,
         password = req.body.password;
 
-    console.log(req.body);
-
     var findUser = Q.nbind(User.findOne, User);
     findUser({email: email})
       .then(function (user) {
@@ -20,8 +18,38 @@ module.exports = {
           return user.comparePasswords(password)
             .then(function(foundUser) {
               if (foundUser) {
-                var token = jwt.encode(user, process.env.TOKEN_SECRET);
-                res.json({token: token});
+
+                var sendUserBack = function(user) {
+                  var token = jwt.encode(user, process.env.TOKEN_SECRET);
+                  res.json({token: token});
+                }
+                // Pretty much finding their partner. If you're a chair, you dont have one :)
+                // Limit school? Probably not my problem.
+                if (foundUser.userLevel === "Delegate") {
+                  findUser(
+                    {
+                      username: {
+                        $ne: user.username
+                      },
+
+                      country: user.country
+                    }
+                  ).then(function(partner){
+
+                    if (partner) {
+                      partner.password = undefined;
+                      partner.hashVerified = undefined;
+                      partner.hashCode = undefined;
+                      user.partner = partner;
+                    }
+
+                    sendUserBack(user);
+
+                  })
+                } else {
+                  sendUserBack(user);
+                }
+
               } else {
                 return next(new Error('Incorrect Password'));
               }

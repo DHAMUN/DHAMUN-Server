@@ -41,7 +41,7 @@ var UserSchema = new mongoose.Schema({
 
   country: {
     type: String,
-    required: true
+    required: false
   },
   
   userLevel: {
@@ -51,7 +51,7 @@ var UserSchema = new mongoose.Schema({
 
   committee: {
     type: String,
-    required: true
+    required: false
   }
 
 });
