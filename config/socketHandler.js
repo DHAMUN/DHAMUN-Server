@@ -5,13 +5,16 @@ var jwt  = require('jwt-simple');
 
 var VoteSession = function(creator) {
   var currentObj = {};
+
   currentObj.closed = false;
   currentObj.creator = creator;
   currentObj.votes = {};
 
   // Add more data to each vote
   currentObj.vote = function(user, type) {
-    votes[user.country] = {school: user.school, type: type};
+    currentObj.votes[user.country] = {school: user.school, type: type};
+    console.log("ADDING VOTE");
+    console.log(JSON.stringify(currentObj.votes, null, 2));
   }
 
   currentObj.getVote = function(user) {
@@ -20,8 +23,6 @@ var VoteSession = function(creator) {
 
   return currentObj;
 }
-
-console.log(JSON.stringify(VoteSession()));
 
 // TODO: Build using Mongo committee Database
 var committeeData = {
@@ -44,8 +45,8 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        console.log(user);
-        console.log("HAS SUBSCRIBED");
+        console.log("SUBSCRIBED: " + user.email);
+        console.log("to " + user.committee + " " + user.country + " and " + user.committee)
         socket.join(user.committee + " " + user.country);
         socket.join(user.committee);
       }
@@ -64,8 +65,9 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        committeeData[user.committee].voteSessions[data.title].vote(user, data.voteType);
-        socket.to(user.committee).emit("vote update", committeeData[user.committee].voteSessions)
+        console.log(data.type)
+        committeeData[user.committee].voteSessions[data.title].vote(user, data.type);
+        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions)
       }
 
 
@@ -75,8 +77,8 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        console.log("EMITTING");
-        socket.emit("vote update", committeeData[user.committee].voteSessions);
+        console.log(user.committee + " emitting");
+        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
       }
 
     });
