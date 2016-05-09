@@ -2,6 +2,19 @@ var jwt  = require('jwt-simple');
 
 // 3 recognized vote types:
 // PASS, REJECT, ABSTAIN
+var vote = function(user, type, sessionObj) {
+  sessionObj.votes[user.country] = {school: user.school, type: type};
+  console.log("ADDING VOTE");
+  console.log(JSON.stringify(sessionObj.votes, null, 2));
+}
+
+var getVote = function(user, sessionObj) {
+  return sessionObj.votes[user.country];
+}
+
+var saveToDB = function(committeeData){
+
+}
 
 var VoteSession = function(creator) {
   var currentObj = {};
@@ -9,17 +22,6 @@ var VoteSession = function(creator) {
   currentObj.closed = false;
   currentObj.creator = creator;
   currentObj.votes = {};
-
-  // Add more data to each vote
-  currentObj.vote = function(user, type) {
-    currentObj.votes[user.country] = {school: user.school, type: type};
-    console.log("ADDING VOTE");
-    console.log(JSON.stringify(currentObj.votes, null, 2));
-  }
-
-  currentObj.getVote = function(user) {
-    return votes[user.country];
-  }
 
   return currentObj;
 }
@@ -53,7 +55,7 @@ module.exports = function (io) {
 
     });
 
-    socket.on("resolution add", function(){
+    socket.on("resolution create", function(){
 
     });
 
@@ -66,7 +68,7 @@ module.exports = function (io) {
 
       if (user) {
         console.log(data.type)
-        committeeData[user.committee].voteSessions[data.title].vote(user, data.type);
+        vote(user, data.type, committeeData[user.committee].voteSessions[data.title]);
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions)
       }
 
@@ -82,6 +84,13 @@ module.exports = function (io) {
       }
 
     });
+
+    socket.on("vote create", function(data){
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+      if (user.userLevel === "Chair") {
+        committeeData[user.committee].voteSessions[data.voteName] = VoteSession(data.creator);
+      }
+    })
 
     socket.on("logout", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);

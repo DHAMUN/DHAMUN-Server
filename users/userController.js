@@ -25,25 +25,32 @@ module.exports = {
                 }
                 // Pretty much finding their partner. If you're a chair, you dont have one :)
                 // Limit school? Probably not my problem.
-                if (foundUser.userLevel === "Delegate") {
-                  findUser(
-                    {
-                      username: {
-                        $ne: user.username
-                      },
+                if (user.userLevel === "Delegate") {
 
-                      country: user.country
+                  var qry = {
+                    country: {
+                      $eq: user.country
+                    },
+                    committee: {
+                      $eq: user.committee
+                    },
+                    email: {
+                      $ne: user.email
                     }
-                  ).then(function(partner){
+                  }
+
+                  findUser(qry).then(function(partner){
 
                     if (partner) {
+
                       partner.password = undefined;
                       partner.hashVerified = undefined;
                       partner.hashCode = undefined;
-                      user.partner = partner;
+                      var newUser = user.toObject();
+                      newUser.partner = partner;
                     }
 
-                    sendUserBack(user);
+                    sendUserBack(newUser);
 
                   })
                 } else {
