@@ -1,7 +1,25 @@
 var jwt  = require('jwt-simple');
-
+var Committee = require('../committees/committeeModel.js');
 // 3 recognized vote types:
 // PASS, REJECT, ABSTAIN
+var vote = function(user, type, sessionObj) {
+  sessionObj.votes[user.country] = {school: user.school, type: type};
+
+}
+
+var getVote = function(user, sessionObj) {
+  return sessionObj.votes[user.country];
+}
+
+var saveToDB = function(committeeData, initial){
+  for (var key in committeeData) {
+    var query = {name: key};
+    Committee.findOneAndUpdate(query, committeeData[key], {upsert:true}, function(err, doc){
+      if (err) console.log("COULD NOT SAVE");
+    });
+  }
+}
+
 
 var VoteSession = function(creator) {
   var currentObj = {};
@@ -10,21 +28,13 @@ var VoteSession = function(creator) {
   currentObj.creator = creator;
   currentObj.votes = {};
 
-  // Add more data to each vote
-  currentObj.vote = function(user, type) {
-    currentObj.votes[user.country] = {school: user.school, type: type};
-    console.log("ADDING VOTE");
-    console.log(JSON.stringify(currentObj.votes, null, 2));
-  }
-
-  currentObj.getVote = function(user) {
-    return votes[user.country];
-  }
-
   return currentObj;
 }
 
-// TODO: Build using Mongo committee Database
+// THIS STRUCTURE IS SAVED TO MONGO
+// THIS STRUCTURE IS ALSO UPDATED IF (and only if) THE DOC EXISTS.
+// OTHERWISE, THIS IS USED AS THE DEFAULT "STARTING" POINT
+// WE CAN USE REDIS LATER TO STORE THIS (SCALING) :P
 var committeeData = {
   "General Assembly": {
     voteSessions: {
@@ -38,6 +48,20 @@ var committeeData = {
   },
 }
 
+
+// Loads data from DB into committeeData, if exists.
+// Otherwise, it uses the default. 
+var loadData = function() {
+  for (var key in committeeData) {
+    var query = {name: key};
+    Committee.findOne(query, function(err, res){
+      if (res) {
+        committeeData[res.name] = res;
+      }
+    });
+  }
+}
+
 module.exports = function (io) {
   io.on("connection", function(socket){
 
@@ -45,15 +69,13 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        console.log("SUBSCRIBED: " + user.email);
-        console.log("to " + user.committee + " " + user.country + " and " + user.committee)
         socket.join(user.committee + " " + user.country);
         socket.join(user.committee);
       }
 
     });
 
-    socket.on("resolution add", function(){
+    socket.on("resolution create", function(){
 
     });
 
@@ -65,9 +87,9 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        console.log(data.type)
-        committeeData[user.committee].voteSessions[data.title].vote(user, data.type);
+        vote(user, data.type, committeeData[user.committee].voteSessions[data.title]);
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions)
+        saveToDB(committeeData);
       }
 
 
@@ -77,11 +99,17 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
-        console.log(user.committee + " emitting");
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
       }
 
     });
+
+    socket.on("vote create", function(data){
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+      if (user.userLevel === "Chair") {
+        committeeData[user.committee].voteSessions[data.voteName] = VoteSession(data.creator);
+      }
+    })
 
     socket.on("logout", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
@@ -95,4 +123,7 @@ module.exports = function (io) {
 
   });
 }
+
+// Inital committee data load.
+loadData();
 
