@@ -7,8 +7,8 @@ var committeeSchema = new mongoose.Schema({
     required: true
   },
 
-  votes: {
-    type: Array
+  voteSessions: {
+    type: {}
   },
 
   resolutions: {
