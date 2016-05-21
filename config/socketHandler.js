@@ -71,6 +71,8 @@ module.exports = function (io) {
       if (user) {
         socket.join(user.committee + " " + user.country);
         socket.join(user.committee);
+        console.log(user.firstName + " is joining " + user.committee);
+
       }
 
     });
@@ -88,7 +90,9 @@ module.exports = function (io) {
 
       if (user) {
         vote(user, data.type, committeeData[user.committee].voteSessions[data.title]);
-        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions)
+        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
+        console.log(user.firstName + " is changing votes");
+
         saveToDB(committeeData);
       }
 
@@ -100,6 +104,9 @@ module.exports = function (io) {
 
       if (user) {
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
+
+        console.log(user.firstName + " is getting votes");
+
       }
 
     });
@@ -115,8 +122,12 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
+
         socket.leave(user.committee + " " + user.country);
         socket.leave(user.country);
+
+        console.log(user.firstName + " is leaving " + user.committee);
+
       }
 
     });
