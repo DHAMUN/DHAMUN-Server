@@ -43,7 +43,9 @@ var committeeData = {
     resolutions: []
   },
   "Security Council": {
-    voteSessions: {},
+    voteSessions: {
+      'Shan is a terrible boss': VoteSession("Omar Country")
+    },
     resolutions: []
   },
 }
@@ -103,9 +105,10 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
+
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
 
-        console.log(user.firstName + " is getting votes");
+        console.log(user.firstName + " is getting votes " + " for " + user.committee);
 
       }
 
