@@ -38,13 +38,13 @@ var VoteSession = function(creator) {
 var committeeData = {
   "General Assembly": {
     voteSessions: {
-      'Pass Resolution X': VoteSession("Germany")
+
     },
     resolutions: []
   },
   "Security Council": {
     voteSessions: {
-      'Shan is a terrible boss': VoteSession("Omar Country")
+
     },
     resolutions: []
   },
@@ -106,8 +106,7 @@ module.exports = function (io) {
 
       if (user) {
 
-        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
-
+        socket.emit("vote update", committeeData[user.committee].voteSessions);
         console.log(user.firstName + " is getting votes " + " for " + user.committee);
 
       }
@@ -118,6 +117,7 @@ module.exports = function (io) {
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
       if (user.userLevel === "Chair") {
         committeeData[user.committee].voteSessions[data.voteName] = VoteSession(data.creator);
+        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
       }
     })
 
