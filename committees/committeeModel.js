@@ -12,7 +12,7 @@ var committeeSchema = new mongoose.Schema({
   },
 
   resolutions: {
-    type: Array
+    type: {}
   }
 
 });

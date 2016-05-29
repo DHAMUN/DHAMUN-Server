@@ -31,6 +31,24 @@ var VoteSession = function(creator) {
   return currentObj;
 }
 
+var Resolution = function(publicLink, creator) {
+  var currentObj = {};
+
+  currentObj.publicLink = publicLink;
+  currentObj.creator = creator;
+  currentObj.approved = false;
+
+  currentObj.cosub = {};
+  currentObj.signat = {};
+
+  currentObj.requests = {};
+
+  // main sub, co sub, signators
+  // Min signators.
+
+  return currentObj;
+}
+
 // THIS STRUCTURE IS SAVED TO MONGO
 // THIS STRUCTURE IS ALSO UPDATED IF (and only if) THE DOC EXISTS.
 // OTHERWISE, THIS IS USED AS THE DEFAULT "STARTING" POINT
@@ -40,13 +58,17 @@ var committeeData = {
     voteSessions: {
 
     },
-    resolutions: []
+    resolutions: {
+
+    }
   },
   "Security Council": {
     voteSessions: {
 
     },
-    resolutions: []
+    resolutions: {
+
+    }
   },
 }
 
@@ -67,6 +89,11 @@ var loadData = function() {
 module.exports = function (io) {
   io.on("connection", function(socket){
 
+
+    /////////////////////////////////////////////////////////////
+    /// User Activity listeners                               ///
+    /////////////////////////////////////////////////////////////
+
     socket.on("subscribe", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
@@ -79,13 +106,109 @@ module.exports = function (io) {
 
     });
 
-    socket.on("resolution create", function(){
+    socket.on("logout", function(data){
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+
+        socket.leave(user.committee + " " + user.country);
+        socket.leave(user.country);
+
+        console.log(user.firstName + " is leaving " + user.committee);
+
+      }
 
     });
 
-    socket.on("resolution sign", function(){
+    /////////////////////////////////////////////////////////////
+    /// Resolution Socket listeners                           ///
+    /////////////////////////////////////////////////////////////
+
+    socket.on("resolution create", function(data) {
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+        committeeData[user.committee].resolutions[data.name] = Resolution(data.link, user.country);
+
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
+
+        saveToDB(committeeData);
+      }
+    });
+
+    socket.on("resolution sign request", function(data) {
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+        committeeData[user.committee].resolutions[data.name].requests[user.country] = {
+          type: data.signType
+        };
+
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
+
+        saveToDB(committeeData);
+      }
 
     });
+
+
+    socket.on("resolution sign revoke", function(data) {
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+        committeeData[user.committee].resolutions[data.name].requests[user.country] = undefined;
+
+        committeeData[user.committee].resolutions[data.name].cosub[user.country] = undefined;
+        committeeData[user.committee].resolutions[data.name].signat[user.country] = undefined;
+
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        saveToDB(committeeData);
+      }
+
+    });
+
+    socket.on("resolution sign accept", function(data) {
+
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+
+        var type = committeeData[user.committee].resolutions[data.name].requests[user.country];
+        committeeData[user.committee].resolutions[data.name][type] = true;
+
+      }
+
+    });
+
+    socket.on("resolution approve", function(data) {
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user && user.userLevel === "Chair") {
+
+        committeeData[user.committee].resolutions[data.name].approve = true;
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        console.log(user.firstName + " is getting resolutions " + " for " + user.committee);
+        saveToDB(committeeData);
+      }
+
+    });
+
+    socket.on("resolution get", function(data) {
+
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+
+        socket.emit("vote update", committeeData[user.committee].resolutions);
+        console.log(user.firstName + " is getting resolutions " + " for " + user.committee);
+
+      }
+
+    });
+
+    /////////////////////////////////////////////////////////////
+    /// Vote Socket listeners                                 ///
+    /////////////////////////////////////////////////////////////
 
     socket.on("vote add", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
@@ -94,10 +217,8 @@ module.exports = function (io) {
         vote(user, data.type, committeeData[user.committee].voteSessions[data.title]);
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
         console.log(user.firstName + " is changing votes");
-
         saveToDB(committeeData);
       }
-
 
     });
 
@@ -115,25 +236,23 @@ module.exports = function (io) {
 
     socket.on("vote create", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-      if (user.userLevel === "Chair") {
+      if (user && user.userLevel === "Chair") {
         committeeData[user.committee].voteSessions[data.voteName] = VoteSession(data.creator);
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
-      }
-    })
-
-    socket.on("logout", function(data){
-      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
-      if (user) {
-
-        socket.leave(user.committee + " " + user.country);
-        socket.leave(user.country);
-
-        console.log(user.firstName + " is leaving " + user.committee);
+        saveToDB(committeeData);
 
       }
-
     });
+
+    socket.on("vote close", function(data){
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+      if (user && user.userLevel === "Chair") {
+        committeeData[user.committee].voteSessions[data.voteName].closed = true;
+        io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
+        saveToDB(committeeData);
+      }
+    });
+
 
   });
 }
