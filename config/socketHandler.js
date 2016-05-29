@@ -16,6 +16,7 @@ var saveToDB = function(committeeData, initial){
     var query = {name: key};
     Committee.findOneAndUpdate(query, committeeData[key], {upsert:true}, function(err, doc){
       if (err) console.log("COULD NOT SAVE");
+      if (initial) console.log("COMPLETED INITIAL LOAD");
     });
   }
 }
@@ -34,14 +35,17 @@ var VoteSession = function(creator) {
 var Resolution = function(publicLink, creator) {
   var currentObj = {};
 
-  currentObj.publicLink = publicLink;
-  currentObj.creator = creator;
-  currentObj.approved = false;
+  currentObj.original = creator;
 
+  currentObj.publicLink = publicLink;
+
+  currentObj.mainsub = {};
   currentObj.cosub = {};
   currentObj.signat = {};
-
   currentObj.requests = {};
+
+  currentObj.mainsub[creator] = true;
+  currentObj.approved = false;
 
   // main sub, co sub, signators
   // Min signators.
@@ -59,7 +63,7 @@ var committeeData = {
 
     },
     resolutions: {
-
+      'Some Res': Resolution("somelink", "Germany")
     }
   },
   "Security Council": {
@@ -171,10 +175,15 @@ module.exports = function (io) {
 
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
-      if (user) {
+      var resPick = committeeData[user.committee].resolutions[data.name];
 
-        var type = committeeData[user.committee].resolutions[data.name].requests[user.country];
-        committeeData[user.committee].resolutions[data.name][type] = true;
+      if (user && (resPick.creator === user.country)) {
+
+        var type = resPick.requests[data.country];
+        resPick[type] = true;
+
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        saveToDB(committeeData);
 
       }
 
@@ -199,7 +208,7 @@ module.exports = function (io) {
 
       if (user) {
 
-        socket.emit("vote update", committeeData[user.committee].resolutions);
+        socket.emit("resolution update", committeeData[user.committee].resolutions);
         console.log(user.firstName + " is getting resolutions " + " for " + user.committee);
 
       }
