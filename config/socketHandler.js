@@ -80,12 +80,23 @@ var committeeData = {
 // Loads data from DB into committeeData, if exists.
 // Otherwise, it uses the default. 
 var loadData = function() {
+  var loaded = 0;
+  var keys = Object.keys(committeeData).length;
   for (var key in committeeData) {
     var query = {name: key};
     Committee.findOne(query, function(err, res){
       if (res) {
         committeeData[res.name] = res;
       }
+
+      if (!err) {
+        loaded++;
+        if (keys === loaded) {
+          console.log("LOAD FROM DB COMPLETE.")
+          console.log();
+        }
+      }
+
     });
   }
 }
