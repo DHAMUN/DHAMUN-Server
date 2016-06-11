@@ -1,5 +1,7 @@
 var jwt  = require('jwt-simple');
 var Committee = require('../committees/committeeModel.js');
+var User = require('../users/userModel.js');
+
 // 3 recognized vote types:
 // PASS, REJECT, ABSTAIN
 var vote = function(user, type, sessionObj) {
@@ -63,8 +65,9 @@ var committeeData = {
 
     },
     resolutions: {
-      'Some Res': Resolution("somelink", "Germany")
-    }
+
+    },
+    admins: []
   },
   "Security Council": {
     voteSessions: {
@@ -72,7 +75,8 @@ var committeeData = {
     },
     resolutions: {
 
-    }
+    },
+    admins: []
   },
 }
 
@@ -84,18 +88,42 @@ var loadData = function() {
   var keys = Object.keys(committeeData).length;
   for (var key in committeeData) {
     var query = {name: key};
-    Committee.findOne(query, function(err, res){
-      if (res) {
-        committeeData[res.name] = res;
+    Committee.findOne(query, function(err, comRes){
+      if (comRes) {
+        committeeData[comRes.name] = comRes;
       }
 
-      if (!err) {
-        loaded++;
-        if (keys === loaded) {
-          console.log("LOAD FROM DB COMPLETE.")
-          console.log();
+      var userQuery = {
+        committee: {
+          $eq: key
+        },
+        userLevel: {
+          $ne: "Delegate"
         }
       }
+
+      User.find(userQuery).lean().exec(function(err, userRes){
+        if (userRes) {
+          committeeData[key].admins = userRes.map(function(obj){
+            var newObj = {};
+            newObj.firstName = obj.firstName;
+            newObj.lastName = obj.lastName;
+            newObj.email = obj.email;
+            newObj.country = obj.country;
+            return newObj;
+          });
+        }
+
+        if (!err) {
+
+          loaded++;
+          if (keys === loaded) {
+            console.log("LOAD FROM DB COMPLETE.")
+            console.log();
+          }
+        }
+      });
+
 
     });
   }
@@ -106,8 +134,18 @@ module.exports = function (io) {
 
 
     /////////////////////////////////////////////////////////////
-    /// User Activity listeners                               ///
+    /// General Activity listeners                            ///
     /////////////////////////////////////////////////////////////
+
+    socket.on("admins get", function(data){
+      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+      if (user) {
+        socket.emit("admins update", committeeData[user.committee].admins);
+        
+      }
+
+    });
 
     socket.on("subscribe", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
@@ -145,7 +183,7 @@ module.exports = function (io) {
       if (user) {
         committeeData[user.committee].resolutions[data.name] = Resolution(data.link, user.country);
 
-        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
 
         saveToDB(committeeData);
       }
@@ -159,7 +197,7 @@ module.exports = function (io) {
           type: data.signType
         };
 
-        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
 
         saveToDB(committeeData);
       }
@@ -176,7 +214,7 @@ module.exports = function (io) {
         committeeData[user.committee].resolutions[data.name].cosub[user.country] = undefined;
         committeeData[user.committee].resolutions[data.name].signat[user.country] = undefined;
 
-        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
         saveToDB(committeeData);
       }
 
@@ -193,7 +231,7 @@ module.exports = function (io) {
         var type = resPick.requests[data.country];
         resPick[type] = true;
 
-        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
         saveToDB(committeeData);
 
       }
@@ -206,7 +244,7 @@ module.exports = function (io) {
       if (user && user.userLevel === "Chair") {
 
         committeeData[user.committee].resolutions[data.name].approve = true;
-        socket.emit("resolution update", committeeData[user.committee].resolutions);
+        io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
         console.log(user.firstName + " is getting resolutions " + " for " + user.committee);
         saveToDB(committeeData);
       }
