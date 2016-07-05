@@ -8,6 +8,8 @@ module.exports = {
         password = req.body.password;
 
     var findUser = Q.nbind(User.findOne, User);
+    var findUsers = Q.nbind(User.find, User);
+
     findUser({email: email})
       .then(function (user) {
         if (!user) {
@@ -20,42 +22,63 @@ module.exports = {
               if (foundUser) {
 
                 var sendUserBack = function(user) {
+                  console.log(user);
+                  console.log("SENDING BACK");
                   var token = jwt.encode(user, process.env.TOKEN_SECRET);
                   res.json({token: token});
                 }
-                // Pretty much finding their partner. If you're a chair, you dont have one :)
-                // Limit school? Probably not my problem.
-                if (user.userLevel === "Delegate") {
 
-                  var qry = {
-                    country: {
-                      $eq: user.country
-                    },
+                var newUser = user.toObject();
+
+
+                var qry = {
+                  country: {
+                    $eq: user.country
+                  },
+                  committee: {
+                    $eq: user.committee
+                  },
+                  email: {
+                    $ne: user.email
+                  },
+                  userLevel: {
+                    $eq: user.userLevel
+                  }
+                }
+
+                findUser(qry).then(function(partner){
+
+                  if (partner) {
+                    partner.password = undefined;
+                    partner.hashVerified = undefined;
+                    partner.hashCode = undefined;
+                    partner._id = undefined;
+                    newUser.partner = partner;
+                  }
+
+                  var adminsQuery = {
                     committee: {
                       $eq: user.committee
                     },
-                    email: {
-                      $ne: user.email
+                    userLevel: {
+                      $ne: "Delegate"
                     }
                   }
 
-                  findUser(qry).then(function(partner){
+                  findUsers(adminsQuery).then(function(admins){
 
-                    if (partner) {
+                    admins.forEach(function(item){
+                      item.password = undefined;
+                      item.hashVerified = undefined;
+                      item.hashCode = undefined;
+                      item._id = undefined;                      
+                    })
 
-                      partner.password = undefined;
-                      partner.hashVerified = undefined;
-                      partner.hashCode = undefined;
-                      var newUser = user.toObject();
-                      newUser.partner = partner;
-                    }
-
+                    newUser.admins = admins;
                     sendUserBack(newUser);
-
-                  })
-                } else {
-                  sendUserBack(user);
-                }
+                    console.log(newUser);
+                  });
+                });
 
               } else {
                 return next(new Error('Incorrect Password'));
