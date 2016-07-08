@@ -66,8 +66,7 @@ var committeeData = {
     },
     resolutions: {
 
-    },
-    admins: []
+    }
   },
   "Security Council": {
     voteSessions: {
@@ -75,8 +74,7 @@ var committeeData = {
     },
     resolutions: {
 
-    },
-    admins: []
+    }
   },
 }
 
@@ -90,40 +88,18 @@ var loadData = function() {
     var query = {name: key};
     Committee.findOne(query, function(err, comRes){
       if (comRes) {
+
         committeeData[comRes.name] = comRes;
       }
 
-      var userQuery = {
-        committee: {
-          $eq: key
-        },
-        userLevel: {
-          $ne: "Delegate"
+
+      if (!err) {
+        loaded++;
+        if (keys === loaded) {
+          console.log("LOAD FROM DB COMPLETE.")
+          console.log();
         }
       }
-
-      User.find(userQuery).lean().exec(function(err, userRes){
-        if (userRes) {
-          committeeData[key].admins = userRes.map(function(obj){
-            var newObj = {};
-            newObj.firstName = obj.firstName;
-            newObj.lastName = obj.lastName;
-            newObj.email = obj.email;
-            newObj.country = obj.country;
-            return newObj;
-          });
-        }
-
-        if (!err) {
-
-          loaded++;
-          if (keys === loaded) {
-            console.log("LOAD FROM DB COMPLETE.")
-            console.log();
-          }
-        }
-      });
-
 
     });
   }
@@ -136,16 +112,6 @@ module.exports = function (io) {
     /////////////////////////////////////////////////////////////
     /// General Activity listeners                            ///
     /////////////////////////////////////////////////////////////
-
-    socket.on("admins get", function(data){
-      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
-      if (user) {
-        socket.emit("admins update", committeeData[user.committee].admins);
-        
-      }
-
-    });
 
     socket.on("subscribe", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
@@ -178,6 +144,7 @@ module.exports = function (io) {
     /////////////////////////////////////////////////////////////
 
     socket.on("resolution create", function(data) {
+
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
       if (user) {
@@ -198,6 +165,7 @@ module.exports = function (io) {
         };
 
         io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
+        console.log("updating users with request");
 
         saveToDB(committeeData);
       }
