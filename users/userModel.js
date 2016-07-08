@@ -94,8 +94,6 @@ UserSchema.pre('save', function (next) {
         return next(err);
       }
 
-      // Generate a unique URL.
-
       user.password = hash;
       user.salt = salt;
       next();

@@ -15,6 +15,9 @@ var committeeSchema = new mongoose.Schema({
     type: {}
   }
 
-});
+}, {minimize: false});
+
+// Minimize removes empty objects in the database.
+// We happen to need empty objects. In case cosub or mainsub is empty (resolutions)
 
 module.exports = mongoose.model('committees', committeeSchema);

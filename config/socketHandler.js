@@ -88,6 +88,7 @@ var loadData = function() {
     var query = {name: key};
     Committee.findOne(query, function(err, comRes){
       if (comRes) {
+
         committeeData[comRes.name] = comRes;
       }
 
@@ -164,6 +165,7 @@ module.exports = function (io) {
         };
 
         io.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
+        console.log("updating users with request");
 
         saveToDB(committeeData);
       }
