@@ -106,6 +106,62 @@ module.exports = {
 
   },
 
+  createUser: function (req, res, next) {
+
+    // The first user must be made by the developer, using the token secret.
+    // After that, use the token from that user to create more.
+
+    var admin = req.body.adminToken;
+    var decoded = jwt.decode(admin, process.env.TOKEN_SECRET);
+
+    if (decoded.userLevel === "Delegate") {
+      next(new Error('ACCESS DENIED!'));
+      return;
+    }
+
+    var firstName  = req.body.firstName,
+        lastName  = req.body.lastName,
+        userLevel = req.body.userLevel,
+        committee = req.body.committee,
+        school = req.body.school,
+        country = req.body.country,
+        email = req.body.email,
+        create,
+        newUser;
+
+    var findOne = Q.nbind(User.findOne, User);
+
+    // check to see if user already exists
+    findOne({username: username})
+      .then(function(user) {
+        if (user) {
+          next(new Error('User already exists!'));
+        } else {
+          // make a new user if not one
+          create = Q.nbind(User.create, User);
+          newUser = {
+            firstName: firstName,
+            lastName: lastName,
+            userLevel: userLevel,
+            committee: committee,
+            school: school,
+            country: country,
+            email: email
+          };
+          return create(newUser);
+        }
+      })
+      .then(function (user) {
+        
+        user.save();
+        res.send(200);
+
+      })
+      .fail(function (error) {
+        next(error);
+      });
+  },
+
   checkAuth: function (req, res, next) {
     // checking to see if the user is authenticated
     // grab the token in the header is any

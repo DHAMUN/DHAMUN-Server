@@ -1,7 +1,18 @@
 var mongoose = require('mongoose'),
     bcrypt   = require('bcrypt-nodejs'),
     Q        = require('q'),
-    SALT_WORK_FACTOR  = 10;
+    SALT_WORK_FACTOR  = 10,
+    HASH_SIZE = 10;
+
+var makeid = function() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < HASH_SIZE; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
 
 var UserSchema = new mongoose.Schema({
 
@@ -102,5 +113,19 @@ UserSchema.pre('save', function (next) {
     });
   });
 });
+
+UserSchema.pre('save', function (next) {
+  
+  var user = this;
+
+  // only hash the password if it has been modified (or is new)
+  if (!user.isModified('hashCode')) {
+    return next();
+  }
+
+  user.hashCode = makeid();
+
+});
+
 
 module.exports = mongoose.model('users', UserSchema);
