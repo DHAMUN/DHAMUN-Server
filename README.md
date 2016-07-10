@@ -1,6 +1,6 @@
 DHAMUN Server
 =========================
-
+[![Build Status](https://travis-ci.org/Referendum/Referendum-Server.svg?branch=master)](https://travis-ci.org/Referendum/Referendum-Server)
 ## Table of Contents
 
 - [About](#about)
