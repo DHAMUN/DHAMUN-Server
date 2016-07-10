@@ -114,6 +114,40 @@ describe('User', function () {
 
   })
 
+
+  describe('.comparePasswords', function (done) {
+
+    var preUser;
+    var enteredPassword;
+
+    before(function(done){
+      enteredPassword = newUser.password = "1234";
+      preUser = new User(newUser);
+      preUser.save(function(err, u) {
+        done(err);
+      });
+    })
+
+    it('exists', function () {
+      expect(preUser.comparePasswords).to.exist;
+    })
+
+    it('compares correct passwords', function(done){
+      preUser.comparePasswords("1234").then(function(user){
+        expect(user).to.be.true;
+        done();
+      })
+    })
+
+    it('compares incorrect passwords', function(done){
+      preUser.comparePasswords("rofl").then(function(user){
+        expect(user).to.be.false;
+        done();
+      })
+    })
+
+  });
+
   describe('.compareCodes', function (done) {
 
     var preUser;
@@ -135,6 +169,5 @@ describe('User', function () {
     })
 
   });
-
   
 });
