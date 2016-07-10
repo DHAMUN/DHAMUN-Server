@@ -26,8 +26,10 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "mockgoose": "^6.0.3",
     "mongoose-mock": "^0.4.0",
     "proxyquire": "^1.7.10",
+    "rewire": "^2.5.2",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
   }

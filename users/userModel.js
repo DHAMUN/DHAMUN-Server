@@ -118,12 +118,14 @@ UserSchema.pre('save', function (next) {
   
   var user = this;
 
-  // only hash the password if it has been modified (or is new)
-  if (!user.isModified('hashCode')) {
+  // only create hashcode if !exist
+
+  if (user.hashCode) {
     return next();
   }
 
   user.hashCode = makeid();
+  next();
 
 });
 
