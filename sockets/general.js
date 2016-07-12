@@ -1,6 +1,6 @@
 var jwt  = require('jwt-simple');
 
-// Sockets are the context for every one of these methods
+// socket is the context for every one of these methods
 module.exports = {
   subscribe: function(data){
 
