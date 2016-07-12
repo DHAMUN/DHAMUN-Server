@@ -22,8 +22,6 @@ module.exports = {
               if (foundUser) {
 
                 var sendUserBack = function(user) {
-                  console.log(user);
-                  console.log("SENDING BACK");
                   var token = jwt.encode(user, process.env.TOKEN_SECRET);
                   res.json({token: token});
                 }
@@ -133,13 +131,8 @@ module.exports = {
 
     // The first user must be made by the developer, using the token secret.
     // After that, use the token from that user to create more.
-
-    var admin = req.body.adminToken;
-    var decoded = jwt.decode(admin, process.env.TOKEN_SECRET);
-
-    if (decoded.userLevel === "Delegate") {
-      next(new Error('ACCESS DENIED!'));
-      return;
+    if (req.user.userLevel === "Delegate") {
+      res.send(403);
     }
 
     var firstName  = req.body.firstName,

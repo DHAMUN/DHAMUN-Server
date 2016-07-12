@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 
+// TODO: Nested Schema
 var committeeSchema = new mongoose.Schema({
 
   name: {
