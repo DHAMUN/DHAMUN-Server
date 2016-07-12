@@ -1,81 +1,27 @@
+
 var jwt  = require('jwt-simple');
 var Committee = require('../committees/committeeModel.js');
 var User = require('../users/userModel.js');
 
+var committeeData = require('./committeeData.js').initialModel;
+var vote = require('./committeeData.js').vote;
+var getVote = require('./committeeData.js').getVote;
+
+var Resolution = require('../resolutions/resolution.js');
+var VoteSession = require('../voteSessions/voteSession.js');
+
+var generalSocketListeners = require('../sockets/general.js');
+
 // 3 recognized vote types:
 // PASS, REJECT, ABSTAIN
-var vote = function(user, type, sessionObj) {
-  sessionObj.votes[user.country] = {school: user.school, type: type};
 
-}
-
-var getVote = function(user, sessionObj) {
-  return sessionObj.votes[user.country];
-}
-
-var saveToDB = function(committeeData, initial){
+var saveToDB = function(committeeData){
   for (var key in committeeData) {
     var query = {name: key};
     Committee.findOneAndUpdate(query, committeeData[key], {upsert:true}, function(err, doc){
       if (err) console.log("COULD NOT SAVE");
-      if (initial) console.log("COMPLETED INITIAL LOAD");
     });
   }
-}
-
-
-var VoteSession = function(creator) {
-  var currentObj = {};
-
-  currentObj.closed = false;
-  currentObj.creator = creator;
-  currentObj.votes = {};
-
-  return currentObj;
-}
-
-var Resolution = function(publicLink, creator) {
-  var currentObj = {};
-
-  currentObj.original = creator;
-
-  currentObj.publicLink = publicLink;
-
-  currentObj.mainsub = {};
-  currentObj.cosub = {};
-  currentObj.signat = {};
-  currentObj.requests = {};
-
-  currentObj.mainsub[creator] = true;
-  currentObj.approved = false;
-
-  // main sub, co sub, signators
-  // Min signators.
-
-  return currentObj;
-}
-
-// THIS STRUCTURE IS SAVED TO MONGO
-// THIS STRUCTURE IS ALSO UPDATED IF (and only if) THE DOC EXISTS.
-// OTHERWISE, THIS IS USED AS THE DEFAULT "STARTING" POINT
-// WE CAN USE REDIS LATER TO STORE THIS (SCALING) :P
-var committeeData = {
-  "General Assembly": {
-    voteSessions: {
-
-    },
-    resolutions: {
-
-    }
-  },
-  "Security Council": {
-    voteSessions: {
-
-    },
-    resolutions: {
-
-    }
-  },
 }
 
 
@@ -108,36 +54,9 @@ var loadData = function() {
 module.exports = function (io) {
   io.on("connection", function(socket){
 
+    socket.on("subscribe", generalSocketListeners.subscribe.bind(socket));
 
-    /////////////////////////////////////////////////////////////
-    /// General Activity listeners                            ///
-    /////////////////////////////////////////////////////////////
-
-    socket.on("subscribe", function(data){
-      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
-      if (user) {
-        socket.join(user.committee + " " + user.country);
-        socket.join(user.committee);
-        console.log(user.firstName + " is joining " + user.committee);
-
-      }
-
-    });
-
-    socket.on("logout", function(data){
-      var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
-      if (user) {
-
-        socket.leave(user.committee + " " + user.country);
-        socket.leave(user.country);
-
-        console.log(user.firstName + " is leaving " + user.committee);
-
-      }
-
-    });
+    socket.on("logout", generalSocketListeners.logout.bind(socket));
 
     /////////////////////////////////////////////////////////////
     /// Resolution Socket listeners                           ///
@@ -250,12 +169,9 @@ module.exports = function (io) {
 
     socket.on("vote get", function(data){
       var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
       if (user) {
-
         socket.emit("vote update", committeeData[user.committee].voteSessions);
         console.log(user.firstName + " is getting votes " + " for " + user.committee);
-
       }
 
     });
@@ -266,7 +182,6 @@ module.exports = function (io) {
         committeeData[user.committee].voteSessions[data.voteName] = VoteSession(data.creator);
         io.sockets.in(user.committee).emit("vote update", committeeData[user.committee].voteSessions);
         saveToDB(committeeData);
-
       }
     });
 

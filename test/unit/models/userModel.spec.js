@@ -5,25 +5,29 @@ var chai = require('chai'),
     sinonChai = require('sinon-chai'),
     mongoose = require('mongoose'),
     mockgoose = require('mockgoose'),
-    User;
+    User = require('../../../users/userModel.js');
 
 chai.use(sinonChai);
 
 before(function(done) {
   mockgoose(mongoose).then(function() {
-    mongoose.connect('mongodb://localhost/TestingDB', function(err) {
-      User = require('../../../users/userModel.js');
+
+    if (mongoose.connection.db) {
+      return done();
+    } 
+
+    mongoose.connect('mongodb://localhost/TestingDB', function(err){
       done(err);
     });
+
   });
 });
-
 
 describe('User', function () {
 
   var newUser;
 
-  beforeEach(function(){
+  beforeEach(function(done){
     newUser = {
       firstName: "John",
       lastName: "Doe",
@@ -33,9 +37,6 @@ describe('User', function () {
       country: "United States",
       email: "john@doe.com"
     };
-  })
-
-  afterEach(function(done){
     mockgoose.reset(function() {
       done()
     });
