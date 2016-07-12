@@ -35,9 +35,9 @@ module.exports = function (io) {
 
     socket.on("vote add", voteSocketListeners.add.bind(io));
 
-    socket.on("vote get", voteSocketListeners.get.bind(io));
+    socket.on("vote get", voteSocketListeners.get.bind(socket));
 
-    socket.on("vote create", voteSocketListeners.create.bind(socket));
+    socket.on("vote create", voteSocketListeners.create.bind(io));
 
     socket.on("vote close", voteSocketListeners.close.bind(io));
 
