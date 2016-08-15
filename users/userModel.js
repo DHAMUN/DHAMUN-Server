@@ -63,6 +63,11 @@ var UserSchema = new mongoose.Schema({
   committee: {
     type: String,
     required: false
+  },
+
+  registered: {
+    type: Boolean,
+    required: true
   }
 
 });
@@ -116,7 +121,7 @@ UserSchema.pre('save', function (next) {
   
   var user = this;
 
-  // only create hashcode if !exist
+  // only create hashcode if !exist.
 
   if (user.hashCode) {
     return next();

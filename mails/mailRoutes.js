@@ -1,11 +1,10 @@
-var mailController = require('./mailController.js'),
-           helpers = require('../config/helpers.js');
+var mailController = require('./mailController.js');
 
 
 
 module.exports = function (app) {
   // app === userRouter injected from middlware.js
 
-  app.post('/send', helpers.decode, mailController.send);
+  app.post('/send', mailController.send);
 
 };
