@@ -24,7 +24,7 @@ var mailGenerator = new Mailgen({
     product: {
         // Appears in header & footer of e-mails
         name: 'DHAMUN',
-        link: 'http://dhamun.com/'
+        link: process.env.WEB_HOST_URI + '/'
         // Optional product logo
         // logo: 'https://mailgen.js/img/logo.png'
     }
@@ -33,6 +33,19 @@ var mailGenerator = new Mailgen({
 module.exports = {
 
   sendSingle: function (user, type, cb) {
+
+
+    function sendMailgun(email, messageData) {
+      var emailBody = mailGenerator.generate(email);
+
+      messageData.html = emailBody;
+
+      mailgun.messages().send(messageData, function (error, body) {
+        if (error) cb(error);
+        else cb(error, body);
+      });
+
+    }
 
     var data = {
       from: 'DHAMUN <admins@dhamun.com>',
@@ -50,18 +63,27 @@ module.exports = {
 
     if (type === EMAIL_SINGLE_TYPES.FORGOT_PASS) {
 
-      data.subject = "Password Reset"
+      // becuase of the 'pre' on Usermodel, this generates a new hashcode!
+      user.hashCode = undefined;
+      user.hashVerified = false;
 
-      email.body.intro = 'You have received this email because a password reset request for your account was received.';
-      email.body.action = {
-          instructions: 'Click the button below to reset your password:',
-          button: {
-              color: '#DC4D2F',
-              text: 'Reset your password',
-              link: 'https://google.com' // Nope
-          }
-      };
-      email.body.outro = 'If you did not request a password reset, no further action is required on your part.';
+      user.save(function(err){
+        console.log(user);
+        data.subject = "Password Reset"
+
+        email.body.intro = 'You have received this email because a password reset request for your account was received.';
+        email.body.action = {
+            instructions: 'Click the button below to reset your password:',
+            button: {
+                color: '#DC4D2F',
+                text: 'Reset your password',
+                link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
+            }
+        };
+        email.body.outro = 'If you did not request a password reset, no further action is required on your part.';
+        sendMailgun(email, data);
+      });
+
 
 
     } else if (type === EMAIL_SINGLE_TYPES.NEW_USER) {
@@ -74,25 +96,16 @@ module.exports = {
           button: {
               color: '#22BC66', // Optional action button color
               text: 'Confirm your account',
-              link: "http://dhamun.com/#/home/signup/" + user.hashCode + "/"
+              link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
           }
       };
 
       email.body.outro = 'Need help, or have questions? Just reply to this email, we\'ll help you out.';
+      sendMailgun(email, data);
 
     } else {
       cb("Illegal message type");
-      return;
     }
-
-    var emailBody = mailGenerator.generate(email);
-
-    data.html = emailBody;
-
-    mailgun.messages().send(data, function (error, body) {
-      if (error) cb(error);
-      else cb(error, body);
-    });
 
   },
 
@@ -103,27 +116,31 @@ module.exports = {
 
   send: function (req, res, next) {
     // body...
-    if (req.user.userLevel === "Delegate") {
-      res.statusCode(403);
-    }
+
 
     if (req.body.recipient === EMAIL_TYPE.SINGLE) {
 
-      Users.findOne({email: req.body.email}, function(err, foundUser){
+      User.findOne({email: req.body.email}, function(err, foundUser){
         if (err) cb(err);
-        else this.sendSingle(foundUser, req.body.type, function(err, body){
+        else module.exports.sendSingle(foundUser, req.body.type, function(err, body){
           if (err) {
-            res.statusCode(400).send(err);
-          } else res.statusCode(200).send(body)
+            console.log(err);
+            res.status(400).send(err);
+          } else res.status(200).send(body)
         });
 
       });
 
     } else if (req.body.recipient === EMAIL_TYPE.BATCH) {
 
-      this.sendBatch(req.body.type, function(err, body){
+      if (req.user.userLevel === "Delegate") {
+        res.status(403).send("Fordbidden");
+        return;
+      }
+
+      module.exports.sendBatch(req.body.type, function(err, body){
         if (err) {
-          res.statusCode(400).send(body);
+          res.status(400).send(err);
         }
       });
 

@@ -15,7 +15,7 @@ module.exports = {
       .then(function (user) {
         if (!user) {
           next(new Error('Invalid email'));
-        } else if (!user.hashVerified){
+        } else if (!user.registered){
           next(new Error('You have not registered your account. Check your email for a link.'));
         } else {
           return user.comparePasswords(password)
@@ -50,6 +50,7 @@ module.exports = {
                   if (partner) {
                     partner.password = undefined;
                     partner.hashVerified = undefined;
+                    partner.registered = undefined;
                     partner.hashCode = undefined;
                     partner._id = undefined;
                     newUser.partner = partner;
@@ -69,6 +70,7 @@ module.exports = {
                     admins.forEach(function(item){
                       item.password = undefined;
                       item.hashVerified = undefined;
+                      item.registered = undefined;
                       item.hashCode = undefined;
                       item._id = undefined;                      
                     })
@@ -95,6 +97,7 @@ module.exports = {
         save;
 
     var findUser = Q.nbind(User.findOne, User);
+
     findUser({hashCode: hash})
       .then(function (user) {
         if (!user) {
@@ -104,6 +107,7 @@ module.exports = {
 
             user.password = password;
             user.hashVerified = true;
+            user.registered = true;
 
             user.save(function(err){
               if (err) {
@@ -130,7 +134,7 @@ module.exports = {
     // The first user must be made by the developer, using the token secret (or directly hitting the DB).
     // After that, use the token from that user to create more.
     if (req.user.userLevel === "Delegate") {
-      res.statusCode(403);
+      res.status(403).send();
     }
 
     var firstName  = req.body.firstName,
@@ -160,7 +164,8 @@ module.exports = {
             committee: committee,
             school: school,
             country: country,
-            email: email
+            email: email,
+            registered: false
           };
 
 
@@ -169,11 +174,12 @@ module.exports = {
       })
       .then(function (user) {
         
-        user.save();
-        MailController.sendSingle(user, "NEW_USER", function(err, done){
-          if (err) res.statusCode(400) 
-          else res.statusCode(200);
-        })
+        user.save(function(err){
+          MailController.sendSingle(user, "NEW_USER", function(err, done){
+            if (err) res.statusCode(400) 
+            else res.statusCode(200);
+          })
+        });
 
       })
       .fail(function (error) {
@@ -195,9 +201,9 @@ module.exports = {
       findUser({hashCode: user.hashCode})
         .then(function (foundUser) {
           if (foundUser) {
-            res.statusCode(200);
+            res.status(200).send();
           } else {
-            res.statusCode(401);
+            res.status(400).send();
           }
         })
         .fail(function (error) {

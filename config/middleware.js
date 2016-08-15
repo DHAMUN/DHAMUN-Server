@@ -19,14 +19,14 @@ module.exports = function (app, express) {
   app.use(bodyParser.json());
 
   app.use('/api/users', userRouter); // use user router for all user request
-  app.use('/api/mail', mailRouter); // use mail router for all mail request
+  app.use('/api/mails', mailRouter); // use mail router for all mail request
 
   app.use(helpers.errorLogger);
   app.use(helpers.errorHandler);
 
   // inject our routers into their respective route files
   require('../users/userRoutes.js')(userRouter);
-  require('../mails/mailRoutes.js')(userRouter);
+  require('../mails/mailRoutes.js')(mailRouter);
 
 
 };
