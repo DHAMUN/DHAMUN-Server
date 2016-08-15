@@ -1,6 +1,7 @@
 var User = require('./userModel.js'),
     Q    = require('q'),
-    jwt  = require('jwt-simple');
+    jwt  = require('jwt-simple'),
+    MailController = require('../mails/mailController.js')
 
 module.exports = {
   signin: function (req, res, next) {
@@ -74,7 +75,6 @@ module.exports = {
 
                     newUser.admins = admins;
                     sendUserBack(newUser);
-                    console.log(newUser);
                   });
                 });
 
@@ -93,8 +93,6 @@ module.exports = {
     var password  = req.body.password,
         hash      = req.body.hash,
         save;
-
-    console.log(req.body);
 
     var findUser = Q.nbind(User.findOne, User);
     findUser({hashCode: hash})
@@ -129,10 +127,10 @@ module.exports = {
 
   createUser: function (req, res, next) {
 
-    // The first user must be made by the developer, using the token secret.
+    // The first user must be made by the developer, using the token secret (or directly hitting the DB).
     // After that, use the token from that user to create more.
     if (req.user.userLevel === "Delegate") {
-      res.send(403);
+      res.statusCode(403);
     }
 
     var firstName  = req.body.firstName,
@@ -148,7 +146,7 @@ module.exports = {
     var findOne = Q.nbind(User.findOne, User);
 
     // check to see if user already exists
-    findOne({username: username})
+    findOne({email: email})
       .then(function(user) {
         if (user) {
           next(new Error('User already exists!'));
@@ -164,13 +162,18 @@ module.exports = {
             country: country,
             email: email
           };
+
+
           return create(newUser);
         }
       })
       .then(function (user) {
         
         user.save();
-        res.send(200);
+        MailController.sendSingle(user, "NEW_USER", function(err, done){
+          if (err) res.statusCode(400) 
+          else res.statusCode(200);
+        })
 
       })
       .fail(function (error) {
@@ -192,9 +195,9 @@ module.exports = {
       findUser({hashCode: user.hashCode})
         .then(function (foundUser) {
           if (foundUser) {
-            res.send(200);
+            res.statusCode(200);
           } else {
-            res.send(401);
+            res.statusCode(401);
           }
         })
         .fail(function (error) {
