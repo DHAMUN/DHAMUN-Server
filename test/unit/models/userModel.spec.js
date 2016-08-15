@@ -35,7 +35,8 @@ describe('User', function () {
       committee: "General Assembly",
       school: "General School",
       country: "United States",
-      email: "john@doe.com"
+      email: "john@doe.com",
+      registered: true
     };
     mockgoose.reset(function() {
       done()
