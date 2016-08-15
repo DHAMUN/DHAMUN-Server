@@ -176,6 +176,7 @@ module.exports = {
         
         user.save(function(err){
           MailController.sendSingle(user, "NEW_USER", function(err, done){
+            console.log(err);
             if (err) res.status(400).send(err); 
             else res.status(200).send();
           })
