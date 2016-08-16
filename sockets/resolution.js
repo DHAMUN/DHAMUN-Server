@@ -58,10 +58,10 @@ module.exports = {
 
   
 
-        resPick.requests[country] = undefined;
-        resPick.cosub[country] = undefined;
-        resPick.signat[country] = undefined;
-        resPick.mainsub[country] = undefined;
+        delete resPick.requests[country];
+        delete resPick.cosub[country];
+        delete resPick.signat[country];
+        delete resPick.mainsub[country];
 
       } 
 
@@ -85,7 +85,7 @@ module.exports = {
 
       resPick[signType][data.country] = true;
 
-      resPick.requests[data.country] = undefined;
+      delete resPick.requests[data.country]
 
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
 
@@ -99,7 +99,7 @@ module.exports = {
 
     if (user && user.userLevel !== "Delegate") {
 
-      committeeData[user.committee].resolutions[data.name].approve = true;
+      committeeData[user.committee].resolutions[data.name].approved = true;
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
       saveToDB(committeeData);
     }
