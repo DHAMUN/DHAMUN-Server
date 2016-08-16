@@ -39,7 +39,6 @@ module.exports = {
       };
 
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
-      console.log("updating users with request");
 
       saveToDB(committeeData);
     }
@@ -50,14 +49,25 @@ module.exports = {
     var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
     if (user) {
-      committeeData[user.committee].resolutions[data.name].requests[user.country] = undefined;
+      var resPick = committeeData[user.committee].resolutions[data.name];
 
-      committeeData[user.committee].resolutions[data.name].cosub[user.country] = undefined;
-      committeeData[user.committee].resolutions[data.name].signat[user.country] = undefined;
+
+      if (!data.country || resPick.original === user.country) {
+
+        var country = data.country || user.country;
+
+  
+
+        delete resPick.requests[country];
+        delete resPick.cosub[country];
+        delete resPick.signat[country];
+        delete resPick.mainsub[country];
+
+      } 
 
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
-
       saveToDB(committeeData);
+
     }
 
   },
@@ -67,10 +77,15 @@ module.exports = {
 
     var resPick = committeeData[user.committee].resolutions[data.name];
 
-    if (user && (resPick.creator === user.country)) {
 
-      var type = resPick.requests[data.country];
-      resPick[type] = true;
+
+    if (user && (resPick.original === user.country)) {
+
+      var signType = resPick.requests[data.country].type;
+
+      resPick[signType][data.country] = true;
+
+      delete resPick.requests[data.country]
 
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
 
@@ -84,9 +99,8 @@ module.exports = {
 
     if (user && user.userLevel !== "Delegate") {
 
-      committeeData[user.committee].resolutions[data.name].approve = true;
+      committeeData[user.committee].resolutions[data.name].approved = true;
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
-      console.log(user.firstName + " is getting resolutions " + " for " + user.committee);
       saveToDB(committeeData);
     }
   }
