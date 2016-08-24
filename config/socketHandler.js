@@ -30,6 +30,10 @@ module.exports = function (io) {
 
     socket.on("resolution approve", resolutionSocketListeners.approve.bind(io));
 
+    socket.on("resolution amendment add", resolutionSocketListeners.amendmentAdd.bind(io));
+
+    socket.on("resolution amendment remove", resolutionSocketListeners.amendmentRemove.bind(io));
+
     socket.on("resolution get", resolutionSocketListeners.get.bind(socket));
 
 

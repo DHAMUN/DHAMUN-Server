@@ -5,6 +5,8 @@ var jwt  = require('jwt-simple');
 var committeeData = require('../committees/committeeData.js').initialModel;
 var saveToDB = require('../committees/committeeData.js').saveToDB;
 var Resolution = require('../resolutions/resolution.js');
+var Amendment = require('../amendments/amendment.js');
+
 
 module.exports = {
 
@@ -56,8 +58,6 @@ module.exports = {
 
         var country = data.country || user.country;
 
-  
-
         delete resPick.requests[country];
         delete resPick.cosub[country];
         delete resPick.signat[country];
@@ -77,8 +77,6 @@ module.exports = {
 
     var resPick = committeeData[user.committee].resolutions[data.name];
 
-
-
     if (user && (resPick.original === user.country)) {
 
       var signType = resPick.requests[data.country].type;
@@ -91,6 +89,30 @@ module.exports = {
 
       saveToDB(committeeData);
 
+    }
+  },
+
+  amendmentAdd: function(data) {
+    var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+
+    var amendments = committeeData[user.committee].resolutions[data.name].amendments;
+
+    if (user) {
+      amendments[data.title] = Amendment(data.creator, data.title, data.message);
+      this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
+      saveToDB(committeeData); 
+    }
+  },
+
+  amendmentRemove: function(data) {
+    var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+    
+    var amendments = committeeData[user.committee].resolutions[data.name].amendments;
+
+    if (user && user.userLevel !== "Delegate") {
+      delete amendments[data.title];
+      this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
+      saveToDB(committeeData);   
     }
   },
 
