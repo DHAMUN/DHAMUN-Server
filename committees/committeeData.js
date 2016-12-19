@@ -32,6 +32,7 @@ var getVote = function(user, sessionObj) {
 }
 
 var saveToDB = function(committeeData){
+  // Saving on "every" event is "probably" not a good idea.
   for (var key in committeeData) {
     var query = {name: key};
     Committee.findOneAndUpdate(query, committeeData[key], {upsert:true}, function(err, doc){

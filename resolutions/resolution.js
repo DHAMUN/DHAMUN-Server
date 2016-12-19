@@ -1,6 +1,7 @@
 module.exports = function(publicLink, creator) {
   var currentObj = {};
-
+  
+  // Ignore the creator.
   currentObj.original = creator;
 
   currentObj.publicLink = publicLink;
