@@ -4,6 +4,7 @@ var api_key = process.env.MAILGUN_KEY;
 var domain = process.env.MAILGUN_DOMAIN;
 var mailgun = require('mailgun-js')({apiKey: api_key, domain: domain});
 var User = require('../users/userModel.js');
+
 // Kinda like enums.
 var EMAIL_SINGLE_TYPES = {
   FORGOT_PASS: "FORGOT_PASS", 
@@ -100,7 +101,7 @@ module.exports = {
           }
       };
 
-      email.body.outro = 'Need help, or have questions? Just reply to this email, we\'ll help you out.';
+      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team.';
       sendMailgun(email, data);
 
     } else {

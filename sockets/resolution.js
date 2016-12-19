@@ -95,10 +95,14 @@ module.exports = {
   amendmentAdd: function(data) {
     var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
+    if (!committeeData[user.committee].resolutions[data.name].amendments) {
+      committeeData[user.committee].resolutions[data.name].amendments = {};
+    }
+
     var amendments = committeeData[user.committee].resolutions[data.name].amendments;
 
     if (user) {
-      amendments[data.title] = Amendment(data.creator, data.title, data.message);
+      amendments[data.title] = Amendment(data.creator, data.title, data.message, data.type);
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
       saveToDB(committeeData); 
     }
