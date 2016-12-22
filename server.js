@@ -4,7 +4,8 @@ if (process.env.NODE_ENV != "production") {
 }
 
 var express     = require('express'),
-    mongoose    = require('mongoose');
+    mongoose    = require('mongoose'),
+    compression = require('compression');
 
 var app = express(),
     cors = require('cors');
@@ -12,6 +13,7 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
 app.use(cors());
+app.use(compression());
 mongoose.connect(process.env.MONGODB_URI); // connect to mongo database
 
 // Serve static files
