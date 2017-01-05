@@ -53,8 +53,9 @@ module.exports = {
     if (user) {
       var resPick = committeeData[user.committee].resolutions[data.name];
 
+      var isMainCoSub = resPick.mainsub[user.country] || resPick.cosub[user.country];
 
-      if (!data.country || resPick.original === user.country) {
+      if (!data.country || ((resPick.original === user.country) || isMainCoSub)) {
 
         var country = data.country || user.country;
 
@@ -77,7 +78,9 @@ module.exports = {
 
     var resPick = committeeData[user.committee].resolutions[data.name];
 
-    if (user && (resPick.original === user.country)) {
+    var isMainCoSub = resPick.mainsub[user.country] || resPick.cosub[user.country];
+
+    if (user && ((resPick.original === user.country) || isMainCoSub)) {
 
       var signType = resPick.requests[data.country].type;
 
@@ -89,7 +92,7 @@ module.exports = {
 
       saveToDB(committeeData);
 
-    }
+    } 
   },
 
   amendmentAdd: function(data) {
