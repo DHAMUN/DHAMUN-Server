@@ -21,6 +21,22 @@ var initialModel = {
 
     }
   },
+  "Arab League": {
+    voteSessions: {
+
+    },
+    resolutions: {
+
+    }
+  },
+  "ECOSOC": {
+    voteSessions: {
+
+    },
+    resolutions: {
+
+    }
+  },
 }
 
 var vote = function(user, type, sessionObj) {
