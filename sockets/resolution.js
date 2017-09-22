@@ -24,7 +24,7 @@ module.exports = {
     var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
 
     if (user) {
-      committeeData[user.committee].resolutions[data.name] = Resolution(data.link, user.country);
+      committeeData[user.committee].resolutions[data.name] = Resolution(user.country);
 
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
 
@@ -66,6 +66,8 @@ module.exports = {
 
       } 
 
+      if (!Object.keys(resPick.cosub).length && !Object.keys(resPick.mainsub).length) resPick.empty = true;
+      
       this.sockets.in(user.committee).emit("resolution update", committeeData[user.committee].resolutions);
       saveToDB(committeeData);
 

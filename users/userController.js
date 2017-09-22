@@ -1,7 +1,15 @@
 var User = require('./userModel.js'),
     Q    = require('q'),
     jwt  = require('jwt-simple'),
-    MailController = require('../mails/mailController.js')
+    MailController = require('../mails/mailController.js'),
+    admin = require("firebase-admin"),
+    firebaseKeys = require("../firebaseKeys.json");
+
+// firebase init
+admin.initializeApp({
+  credential: admin.credential.cert(firebaseKeys),
+  databaseURL: process.env.FIREBASE_URI
+});
 
 module.exports = {
   signin: function (req, res, next) {
@@ -23,8 +31,10 @@ module.exports = {
               if (foundUser) {
 
                 var sendUserBack = function(user) {
-                  var token = jwt.encode(user, process.env.TOKEN_SECRET);
+
+                  var token = jwt.encode(user, process.env.TOKEN_SECRET);                    
                   res.json({token: token});
+                  
                 }
 
                 var newUser = user.toObject();
@@ -89,6 +99,17 @@ module.exports = {
       .fail(function (error) {
         next(error);
       });
+  },
+
+  refreshFbaseToken: function (req, res, next) {
+
+    admin.auth().createCustomToken(req.user.email)
+    .then(function(customToken) {
+      // Send token back to client
+      res.send({updatedToken: customToken});
+      
+    })
+    
   },
 
   signup: function (req, res, next) {

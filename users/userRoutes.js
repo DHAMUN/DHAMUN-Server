@@ -10,5 +10,6 @@ module.exports = function (app) {
   app.post('/signup', userController.signup);
   app.post('/create', helpers.decode, userController.createUser);
   app.get('/signedin', userController.checkAuth);
+  app.post('/fbasetoken', helpers.decode, userController.refreshFbaseToken);
 
 };
