@@ -1,10 +1,8 @@
-module.exports = function(publicLink, creator) {
+module.exports = function(creator) {
   var currentObj = {};
   
   // Ignore the creator.
   currentObj.original = creator;
-
-  currentObj.publicLink = publicLink;
 
   currentObj.mainsub = {};
   currentObj.cosub = {};
@@ -13,6 +11,7 @@ module.exports = function(publicLink, creator) {
 
   currentObj.mainsub[creator] = true;
   currentObj.approved = false;
+  currentObj.empty = false;
 
   // main sub, co sub, signators
   // Min signators.
