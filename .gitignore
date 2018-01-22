@@ -2,7 +2,6 @@
 logs
 *.log
 npm-debug.log*
-firebaseKeys.json
 
 # Runtime data
 pids
