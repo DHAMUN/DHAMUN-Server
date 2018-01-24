@@ -5,7 +5,7 @@ var Committee = require('./committeeModel.js');
 // OTHERWISE, THIS IS USED AS THE DEFAULT "STARTING" POINT
 
 var initialModel = {
-  "General Assembly": {
+  "General Assembly 2": {
     voteSessions: {
 
     },
@@ -13,7 +13,7 @@ var initialModel = {
 
     }
   },
-  "Security Council": {
+  "General Assembly 3": {
     voteSessions: {
 
     },
@@ -21,15 +21,7 @@ var initialModel = {
 
     }
   },
-  "Arab League": {
-    voteSessions: {
-
-    },
-    resolutions: {
-
-    }
-  },
-  "ECOSOC": {
+  "Special Committee": {
     voteSessions: {
 
     },
