@@ -11,12 +11,12 @@ module.exports = {
 
   markPresent: function(data){
     var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
-
-    if (user) {
+    console.log(data.inputtedVerificationID, attendanceData[user.committee].verificationID)
+    if (user && (data.inputtedVerificationID == attendanceData[user.committee].verificationID)) {     
       attendanceData[user.committee][user.country] = true;
       this.sockets.in(user.committee).emit("attendance update", selectivelyStripID(attendanceData, user));
       console.log(user.firstName + " is marking himself present");
-    }
+    } 
 
   },
 
