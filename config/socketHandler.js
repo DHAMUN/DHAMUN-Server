@@ -4,6 +4,7 @@ var committeeData = require('../committees/committeeData.js').initialModel;
 var generalSocketListeners = require('../sockets/general.js');
 var resolutionSocketListeners = require('../sockets/resolution.js');
 var voteSocketListeners = require('../sockets/vote.js');
+var attendanceSocketListeners = require('../sockets/attendance.js');
 
 
 // Loads data from DB into committeeData, if exists.
@@ -45,6 +46,10 @@ module.exports = function (io) {
 
     socket.on("vote close", voteSocketListeners.close.bind(io));
 
+
+    socket.on("attendance present", attendanceSocketListeners.markPresent.bind(io));
+
+    socket.on("attendance get", attendanceSocketListeners.get.bind(socket));
 
   });
 }

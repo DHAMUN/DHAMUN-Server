@@ -1,19 +1,10 @@
 var mongoose = require('mongoose'),
     bcrypt   = require('bcrypt-nodejs'),
     Q        = require('q'),
+    makeid   = require('../config/utils.js').makeid,
     SALT_WORK_FACTOR  = 10,
     HASH_SIZE = 10;
-
-var makeid = function() {
-  var text = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  for (var i = 0; i < HASH_SIZE; i++)
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
-}
-
+    
 var UserSchema = new mongoose.Schema({
 
   hashCode: {
@@ -127,7 +118,7 @@ UserSchema.pre('save', function (next) {
     return next();
   }
 
-  user.hashCode = makeid();
+  user.hashCode = makeid(HASH_SIZE);
   next();
 
 });
