@@ -8,7 +8,8 @@ var User = require('../users/userModel.js');
 // Kinda like enums.
 var EMAIL_SINGLE_TYPES = {
   FORGOT_PASS: "FORGOT_PASS", 
-  NEW_USER: "NEW_USER"
+  NEW_USER: "NEW_USER",
+  REMIND_USER: "REMIND_USER"
 }
 
 var EMAIL_BATCH_TYPES = {
@@ -101,7 +102,24 @@ module.exports = {
           }
       };
 
-      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team.';
+      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team (or reply to this email).';
+      sendMailgun(email, data);
+
+    } else if (type === EMAIL_SINGLE_TYPES.REMIND_USER) {
+
+      data.subject = "Hey! Sign up already!"
+      
+      email.body.intro = "Welcome to DHAMUN! We’ve noticed that you haven't activated your account yet :(",
+      email.body.action = {
+          instructions: 'To setup a password on DHAMUN Portal, please click here:',
+          button: {
+              color: '#22BC66', // Optional action button color
+              text: 'Confirm your account',
+              link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
+          }
+      };
+
+      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team (or reply to this email).';
       sendMailgun(email, data);
 
     } else {
@@ -110,9 +128,27 @@ module.exports = {
 
   },
 
-  // TODO
+  // TODO: use promises
   sendBatch: function (type, cb) {
-    cb("Not implemented yet :)")
+    var _this = this;
+
+    if (type === EMAIL_SINGLE_TYPES.REMIND_USER) {
+      var completed = [];
+
+      User.find({registered: false}, function(err, foundUsers) {
+        if (err || foundUsers.length == 0) cb("couldn't find unregistered users");
+
+        foundUsers.forEach(function(user){
+          _this.sendSingle(user, type, function (err, body){
+            completed.push({err, body});
+            if (completed.length == foundUsers.length) cb(null, completed);
+          })
+        })
+
+      })
+
+    } else cb("Illegal batch type");
+
   },
 
   send: function (req, res, next) {
@@ -122,10 +158,9 @@ module.exports = {
     if (req.body.recipient === EMAIL_TYPE.SINGLE) {
 
       User.findOne({email: req.body.email}, function(err, foundUser){
-        if (err) cb(err);
+        if (err || !foundUser) res.status(400).send(err);
         else module.exports.sendSingle(foundUser, req.body.type, function(err, body){
           if (err) {
-            console.log(err);
             res.status(400).send(err);
           } else res.status(200).send(body)
         });
@@ -134,18 +169,13 @@ module.exports = {
 
     } else if (req.body.recipient === EMAIL_TYPE.BATCH) {
 
-      if (req.user.userLevel === "Delegate") {
-        res.status(403).send("Fordbidden");
-        return;
-      }
-
       module.exports.sendBatch(req.body.type, function(err, body){
         if (err) {
           res.status(400).send(err);
-        }
+        } else res.status(200).send(body);
       });
 
-    }
+    } else res.status(400).send("invalid recipient type")
 
 
   }
