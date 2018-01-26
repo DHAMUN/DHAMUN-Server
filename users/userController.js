@@ -31,10 +31,9 @@ module.exports = {
               if (foundUser) {
 
                 var sendUserBack = function(user) {
-
+                  user.issuedAt = Date.now();
                   var token = jwt.encode(user, process.env.TOKEN_SECRET);                    
                   res.json({token: token});
-                  
                 }
 
                 var newUser = user.toObject();
