@@ -4,6 +4,7 @@ var api_key = process.env.MAILGUN_KEY;
 var domain = process.env.MAILGUN_DOMAIN;
 var mailgun = require('mailgun-js')({apiKey: api_key, domain: domain});
 var User = require('../users/userModel.js');
+var mailTemplator = require('./mailTemplater.js');
 
 // Kinda like enums.
 var EMAIL_SINGLE_TYPES = {
@@ -49,20 +50,6 @@ module.exports = {
 
     }
 
-    var data = {
-      from: 'DHAMUN <admins@dhamun.com>',
-      to: user.email
-    };
-
-    var email = {
-        body: {
-            name: user.firstName + " " +  user.lastName,
-            action: {
-
-            }
-        }
-    };
-
     if (type === EMAIL_SINGLE_TYPES.FORGOT_PASS) {
 
       // becuase of the 'pre' on Usermodel, this generates a new hashcode!
@@ -70,57 +57,19 @@ module.exports = {
       user.hashVerified = false;
 
       user.save(function(err){
-        console.log(user);
-        data.subject = "Password Reset"
-
-        email.body.intro = 'You have received this email because a password reset request for your account was received.';
-        email.body.action = {
-            instructions: 'Click the button below to reset your password:',
-            button: {
-                color: '#DC4D2F',
-                text: 'Reset your password',
-                link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
-            }
-        };
-        email.body.outro = 'If you did not request a password reset, no further action is required on your part.';
-        sendMailgun(email, data);
+        var template = mailTemplator.forgotPassEmail(user);
+        sendMailgun(template.email, template.data);
       });
-
-
 
     } else if (type === EMAIL_SINGLE_TYPES.NEW_USER) {
 
-      data.subject = "Account Activation"
-
-      email.body.intro = 'Welcome to DHAMUN! We’re very excited to have you attend.',
-      email.body.action = {
-          instructions: 'To setup a password on DHAMUN Portal, please click here:',
-          button: {
-              color: '#22BC66', // Optional action button color
-              text: 'Confirm your account',
-              link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
-          }
-      };
-
-      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team (or reply to this email).';
-      sendMailgun(email, data);
+      var template = mailTemplator.newUserEmail(user);
+      sendMailgun(template.email, template.data);
 
     } else if (type === EMAIL_SINGLE_TYPES.REMIND_USER) {
 
-      data.subject = "Hey! Sign up already!"
-      
-      email.body.intro = "Welcome to DHAMUN! We’ve noticed that you haven't activated your account yet :(",
-      email.body.action = {
-          instructions: 'To setup a password on DHAMUN Portal, please click here:',
-          button: {
-              color: '#22BC66', // Optional action button color
-              text: 'Confirm your account',
-              link: process.env.WEB_HOST_URI + "/#/home/signup/" + user.hashCode + "/"
-          }
-      };
-
-      email.body.outro = 'Need help, or have questions? Email a member of the DHAMUN exec team (or reply to this email).';
-      sendMailgun(email, data);
+      var template = mailTemplator.reminderEmail(user);
+      sendMailgun(template.email, template.data);
 
     } else {
       cb("Illegal message type");
