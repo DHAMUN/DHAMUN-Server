@@ -17,7 +17,7 @@ var fetchAttendaceModel = function (cb) {
     User.find({committee: key}, function(err, users){
       for (var i = 0; i < users.length; i++) {
         if (users[i].country !== "" && users[i].userLevel == "Delegate") {
-          attendanceModel[key][users[i].country] = false;
+          attendanceModel[users[i].committee][users[i].country] = false;
         }
       }
       
