@@ -22,19 +22,18 @@ module.exports = {
     findUser({email: email})
       .then(function (user) {
         if (!user) {
-          next(new Error('Invalid email'));
+          res.status(403).send({error: "Invalid email"});
         } else if (!user.registered){
-          next(new Error('You have not registered your account. Check your email for a link.'));
+          res.status(403).send({error:'You have not registered your account. Check your email for a link.'});
         } else {
           return user.comparePasswords(password)
             .then(function(foundUser) {
               if (foundUser) {
 
                 var sendUserBack = function(user) {
-
+                  user.issuedAt = Date.now();
                   var token = jwt.encode(user, process.env.TOKEN_SECRET);                    
                   res.json({token: token});
-                  
                 }
 
                 var newUser = user.toObject();
@@ -91,7 +90,7 @@ module.exports = {
                 });
 
               } else {
-                return next(new Error('Incorrect Password'));
+                return res.status(403).send({error:'Incorrect Password'});
               }
             });
         }
@@ -122,7 +121,7 @@ module.exports = {
     findUser({hashCode: hash})
       .then(function (user) {
         if (!user) {
-          next(new Error('Not a valid link!'));
+          res.status(403).send({error:'Not a valid link!'});
         } else {
           if (user.compareCodes(hash) && !user.hashVerified){
 
@@ -140,7 +139,7 @@ module.exports = {
             })
 
           } else {
-            return next(new Error('This account has been registered. Talk to an admin if its yours.'));
+            res.status(403).send({error:'This account has been registered. Talk to an admin if its yours.'});
           }
         }
       })
@@ -174,7 +173,7 @@ module.exports = {
     findOne({email: email})
       .then(function(user) {
         if (user) {
-          next(new Error('User already exists!'));
+          res.status(403).send({error:'User already exists!'});
         } else {
           // make a new user if not one
           create = Q.nbind(User.create, User);
@@ -215,7 +214,7 @@ module.exports = {
     // check to see if that user exists in the database
     var token = req.headers['x-access-token'];
     if (!token) {
-      next(new Error('No token'));
+      res.status(403).send({error:'No token'});
     } else {
       var user = jwt.decode(token, process.env.TOKEN_SECRET);
       var findUser = Q.nbind(User.findOne, User);
