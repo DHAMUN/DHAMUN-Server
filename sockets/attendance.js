@@ -1,6 +1,11 @@
 
-var attendanceData = require('../committees/attendanceData.js');
 var jwt  = require('jwt-simple');
+var attendanceData;
+
+require('../committees/attendanceData.js')(function(builtAttendanceModel) {
+  attendanceData = builtAttendanceModel;
+});
+
 
 function selectivelyStripID(attendanceData, user) {
   return (user.userLevel !== "Delegate" ? attendanceData[user.committee] : 
