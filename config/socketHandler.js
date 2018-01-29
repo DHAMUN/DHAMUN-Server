@@ -51,5 +51,7 @@ module.exports = function (io) {
 
     socket.on("attendance get", attendanceSocketListeners.get.bind(socket));
 
+    socket.on("attendance reset", attendanceSocketListeners.reset.bind(io));
+
   });
 }

@@ -1,8 +1,11 @@
 
 var jwt  = require('jwt-simple');
-var attendanceData;
+var modelResettor = require('../committees/attendanceData.js').modelResettor;
 
-require('../committees/attendanceData.js')(function(builtAttendanceModel) {
+var attendanceData;
+var modelBuilder = require('../committees/attendanceData.js').modelBuilder;
+
+modelBuilder(function(builtAttendanceModel) {
   attendanceData = builtAttendanceModel;
 });
 
@@ -34,4 +37,12 @@ module.exports = {
     }
 
   },
+
+  reset: function(data) {
+    var user = jwt.decode(data.token, process.env.TOKEN_SECRET);
+    if (user && user.userLevel && user.userLevel === "Chair") {
+      attendanceData[user.committee] = modelResettor(attendanceData[user.committee])
+      this.sockets.in(user.committee).emit("attendance update", selectivelyStripID(attendanceData, user));
+    }
+  }
 }

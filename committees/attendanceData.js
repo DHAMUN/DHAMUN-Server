@@ -4,7 +4,7 @@ var CommitteeModel = require('./committeeData.js').initialModel;
 
 var committees = Object.keys(CommitteeModel);
 
-var fetchAttendaceModel = function (cb) {
+var modelBuilder = function (cb) {
 
   var attendanceModel = {};
   var completed = 0;
@@ -30,4 +30,17 @@ var fetchAttendaceModel = function (cb) {
 
 }
 
-module.exports = fetchAttendaceModel;
+var modelResettor = function(subModel) {
+  for (var country in subModel) {
+    subModel[country] = false;
+  }
+
+  subModel.verificationID = makeid(6);
+
+  return subModel;
+}
+
+module.exports = {
+  modelBuilder,
+  modelResettor
+}
