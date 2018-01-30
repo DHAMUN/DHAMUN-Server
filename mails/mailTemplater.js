@@ -20,8 +20,8 @@ module.exports = {
   reminderEmail: function (user) {
     var {data, email} = commonTemplate(user);
 
-    data.subject = "Hey! Sign up already!"
-    email.body.intro = "Welcome to DHAMUN! We’ve noticed that you haven't activated your account yet :(",
+    data.subject = "DHAMUN XII Reminder"
+    email.body.intro = "Welcome to DHAMUN! We’ve noticed that you haven't activated your account yet.",
     email.body.action = {
       instructions: 'To setup a password on DHAMUN Portal, please click here:',
       button: {
