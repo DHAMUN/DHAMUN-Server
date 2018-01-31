@@ -23,9 +23,11 @@ module.exports = {
     return url.match(rValidUrl);
   },
 
-  makeid: function(length) {
+  makeid: function(length, numbersOnly) {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    if (numbersOnly) possible = "0123456789";
   
     for (var i = 0; i < length; i++)
       text += possible.charAt(Math.floor(Math.random() * possible.length));
