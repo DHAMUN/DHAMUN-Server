@@ -11,7 +11,7 @@ var modelBuilder = function (cb) {
 
   for (var key in CommitteeModel) {
     attendanceModel[key] = {
-      "verificationID": makeid(6)
+      "verificationID": makeid(6, true) // 2nd param sets id to numbers only
     }
   
     User.find({committee: key}, function(err, users){
