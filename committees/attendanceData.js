@@ -35,7 +35,7 @@ var modelResettor = function(subModel) {
     subModel[country] = false;
   }
 
-  subModel.verificationID = makeid(6);
+  subModel.verificationID = makeid(6, true);
 
   return subModel;
 }
